@@ -11,6 +11,7 @@ import io.siddhi.core.stream.input.source.SourceMapper;
 import io.siddhi.core.util.config.ConfigReader;
 import io.siddhi.core.util.transport.OptionHolder;
 import io.siddhi.query.api.definition.StreamDefinition;
+import org.apache.log4j.Logger;
 
 import java.util.List;
 
@@ -65,26 +66,22 @@ import java.util.List;
  */
 
 @Extension(
-        name = "binarypassthru",
+        name = "binaryPassThrough",
         namespace = "sourceMapper",
         description = " ",
-        parameters = {
-                /*@Parameter(name = " ",
-                        description = " " ,
-                        dynamic = false/true,
-                        optional = true/false, defaultValue = " ",
-                        type = {DataType.INT, DataType.BOOL, DataType.STRING, DataType.DOUBLE,etc }),
-                        type = {DataType.INT, DataType.BOOL, DataType.STRING, DataType.DOUBLE, }),*/
-        },
         examples = {
                 @Example(
-                        syntax = " ",
+                        syntax = "@source(type='file', mode='binary.chunked', file.uri='', " +
+                                "@map(type='binaryPassThrough'))\n" +
+                                "define stream FooStream( buffer object);",
                         description = " "
                 )
         }
 )
 // for more information refer https://siddhi.io/en/v5.0/docs/query-guide/#source-mapper
-public class BinarypassthruSourceMapper extends SourceMapper {
+public class BinaryPassThroughSourceMapper extends SourceMapper {
+    static final Logger LOG = Logger.getLogger(BinaryPassThroughSourceMapper.class);
+    private StreamDefinition streamDefinition;
 
     /**
      * The initialization method for {@link SourceMapper}, which will be called before other methods and validate
@@ -100,7 +97,7 @@ public class BinarypassthruSourceMapper extends SourceMapper {
     public void init(StreamDefinition streamDefinition, OptionHolder optionHolder,
                      List<AttributeMapping> attributeMappingList, ConfigReader configReader,
                      SiddhiAppContext siddhiAppContext) {
-
+        this.streamDefinition = streamDefinition;
     }
 
     /**
@@ -125,9 +122,9 @@ public class BinarypassthruSourceMapper extends SourceMapper {
     protected void mapAndProcess(Object eventObject, InputEventHandler inputEventHandler) throws InterruptedException {
         if (eventObject != null) {
             if (eventObject instanceof byte[]) {
-                Event event = new Event();
-                event.setTimestamp(-1);
-                event.setData(new Object[] {eventObject});
+                Object[] data = new Object[streamDefinition.getAttributeList().size()];
+                data[0] = eventObject;
+                Event event = new Event(-1, data);
                 inputEventHandler.sendEvent(event);
             } else {
                 throw new SiddhiAppRuntimeException("Event object must be a byte[] but found " +
